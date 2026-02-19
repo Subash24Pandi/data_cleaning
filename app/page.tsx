@@ -2,12 +2,21 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType } from 'docx';
+import Image from 'next/image';
 // @ts-ignore
 import { transformData } from '../lib/transformer';
 // @ts-ignore
 import { saveClients } from '../lib/actions';
-import { Upload, Database, Download, FileText, Table as TableIcon, RefreshCw, ShieldCheck } from 'lucide-react';
+import { 
+  Upload, 
+  Database, 
+  FileText, 
+  Table as TableIcon, 
+  RefreshCw, 
+  ShieldCheck,
+  LayoutDashboard,
+  CheckCircle2
+} from 'lucide-react';
 
 export default function Home() {
   const [preview, setPreview] = useState<any[]>([]);
@@ -23,11 +32,7 @@ export default function Home() {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
-        
-        // If no header, use 'header: 1' to get data as arrays
         const rawData = XLSX.utils.sheet_to_json(sheet, { header: XLSX.utils.sheet_to_json(sheet).length > 0 ? 0 : 1 });
-        
-        // Handle array of arrays if header: 1 was used
         const processedData = Array.isArray(rawData[0]) 
           ? rawData.map((arr: any) => Object.assign({}, arr))
           : rawData;
@@ -55,72 +60,131 @@ export default function Home() {
     saveAs(blob, "cleaned_data.csv");
   };
 
-  const downloadWord = async () => {
-    const cols = getCols();
-    const tableRows = [
-      new TableRow({
-        children: cols.map(c => new TableCell({ children: [new Paragraph({ text: c, bold: true })] }))
-      }),
-      ...preview.map(row => new TableRow({
-        children: cols.map(c => new TableCell({ children: [new Paragraph(row[c]?.toString() || "")] }))
-      }))
-    ];
-    const doc = new Document({
-      sections: [{ children: [new Paragraph({ text: "cleaned report", heading: "Heading1" }), new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: tableRows })] }]
-    });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "cleaned_report.docx");
-  };
-
   return (
-    <div className="min-h-screen bg-white p-6 md:p-12 font-sans lowercase">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-10 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-          <h1 className="text-2xl font-black italic tracking-tighter text-slate-800">data<span className="text-blue-600 uppercase italic tracking-normal">pure</span></h1>
-          <div className="flex gap-2">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans lowercase selection:bg-blue-100">
+      {/* Navigation Bar */}
+      {/* Navigation Bar */}
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-5">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-5">
+            {/* BIGGER LOGO SECTION */}
+            <div className="relative w-16 h-16 transition-transform hover:scale-105 duration-300">
+              <img 
+                src="/logo.png" 
+                alt="The AItel Logo" 
+                className="object-contain w-full h-full"
+                onError={(e) => {
+                  console.error("Logo not found in public folder");
+                  e.currentTarget.src = "https://via.placeholder.com/150?text=AItel"; // Fallback if logo missing
+                }}
+              />
+            </div>
+            
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase leading-none mb-1">
+                The Data Cleaning Website
+              </span>
+              <span className="text-2xl font-black italic tracking-tighter text-slate-900 leading-none">
+                powered by <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 uppercase not-italic tracking-normal">The AItel</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex gap-4">
             {preview.length > 0 && (
-              <>
-                <button onClick={downloadExcel} title="excel" className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition"><TableIcon size={18}/></button>
-                <button onClick={downloadCSV} title="csv" className="p-3 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition"><FileText size={18}/></button>
-                <button onClick={downloadWord} title="word" className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition"><Download size={18}/></button>
-              </>
+              <div className="flex bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200 backdrop-blur-sm">
+                <button onClick={downloadExcel} className="flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-600 rounded-xl shadow-sm hover:bg-emerald-50 transition-all font-bold text-xs">
+                   <TableIcon size={18}/> excel
+                </button>
+                <button onClick={downloadCSV} className="flex items-center gap-2 px-5 py-2.5 text-slate-600 rounded-xl hover:bg-white hover:shadow-sm transition-all font-bold text-xs">
+                   <FileText size={18}/> csv
+                </button>
+              </div>
             )}
           </div>
-        </header>
-
-        <div className="bg-slate-50/40 rounded-[2.5rem] p-12 border-2 border-dashed border-slate-200 text-center mb-10 relative group hover:border-blue-400 transition-all">
-          <Upload className="mx-auto mb-4 text-slate-300 group-hover:text-blue-500 transition-all" size={40} />
-          <h2 className="text-lg font-bold text-slate-700 tracking-tight">upload any file</h2>
-          <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-widest font-black italic">works with or without headings</p>
-          <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept=".csv, .xls, .xlsx" />
+        </div>
+      </nav>
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
+            Professional Data <span className="text-blue-600">Refining.</span>
+          </h2>
+          <p className="text-slate-500 max-w-xl mx-auto text-lg leading-relaxed">
+            Upload your automotive datasets. We handle headers, clean names, format numbers, and sync to your cloud.
+          </p>
         </div>
 
+        {/* Upload Container */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="relative group cursor-pointer">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-white rounded-[2.5rem] p-16 border-2 border-dashed border-slate-200 flex flex-col items-center text-center transition-all group-hover:border-blue-400">
+              <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <Upload className="text-blue-600" size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">Drop your client database here</h3>
+              <p className="text-slate-400 text-sm font-medium tracking-wide italic">Accepts XLSX, XLS, and CSV files</p>
+              <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept=".csv, .xls, .xlsx" />
+            </div>
+          </div>
+        </div>
+
+        {/* Sync Success Alert */}
         {isSaved && (
-          <div className="mb-10 p-6 bg-blue-600 text-white rounded-[2rem] flex items-center shadow-lg animate-in fade-in zoom-in">
-            <ShieldCheck className="w-6 h-6 mr-4 opacity-80" />
-            <span className="font-bold">sync complete! data cleaned in lowercase.</span>
+          <div className="max-w-2xl mx-auto mb-12 animate-in fade-in slide-in-from-top-4">
+            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-3xl flex items-center gap-4">
+              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                <CheckCircle2 size={24} />
+              </div>
+              <div>
+                <p className="font-bold text-emerald-900">Synchronization Success</p>
+                <p className="text-emerald-600 text-sm italic">All data has been normalized to lowercase and stored in Neon DB.</p>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Data Preview Card */}
         {preview.length > 0 && (
-          <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 animate-in slide-in-from-bottom-10">
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-60 italic">rows: {preview.length}</span>
-              <button onClick={async () => { setLoading(true); await saveClients(preview); setLoading(false); setIsSaved(true); setPreview([]); }} disabled={loading} className="bg-blue-600 px-10 py-3 rounded-2xl font-bold text-xs hover:bg-blue-700 transition flex items-center gap-2">
-                {loading ? <RefreshCw className="animate-spin" size={14}/> : <Database size={14}/>} sync to neon
+          <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100 animate-in slide-in-from-bottom-8">
+            <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl">
+                  <LayoutDashboard size={20} className="text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg leading-none">Cleaned Results</h4>
+                  <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mt-1 italic">Total entries: {preview.length}</p>
+                </div>
+              </div>
+              <button 
+                onClick={async () => { setLoading(true); await saveClients(preview); setLoading(false); setIsSaved(true); setPreview([]); }} 
+                disabled={loading} 
+                className="bg-blue-600 px-12 py-4 rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all flex items-center gap-3 shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
+              >
+                {loading ? <RefreshCw className="animate-spin" size={18}/> : <Database size={18}/>} 
+                {loading ? "Processing..." : "Sync to Neon"}
               </button>
             </div>
+            
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
-                    {getCols().map(col => <th key={col} className="p-8 border-b border-slate-100">{col}</th>)}
+                  <tr className="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-[0.2em]">
+                    {getCols().map(col => (
+                      <th key={col} className="p-10 border-b border-slate-100">{col}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="text-slate-600">
                   {preview.map((row, i) => (
-                    <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
-                      {getCols().map(col => <td key={col} className="p-8">{row[col]}</td>)}
+                    <tr key={i} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                      {getCols().map(col => (
+                        <td key={col} className={`p-10 transition-colors ${col === 'first name' ? 'font-bold text-slate-900' : 'font-medium'}`}>
+                          {row[col]}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -128,7 +192,14 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-slate-200 text-center">
+        <p className="text-slate-400 text-xs font-medium tracking-widest uppercase italic italic">
+          &copy; {new Date().getFullYear()} The AItel Data Refinery | All rights reserved
+        </p>
+      </footer>
     </div>
   );
 }
