@@ -134,9 +134,9 @@ export default function Home() {
   const getCleanData = () => {
     return preview.map(row => {
       const cleanRow: any = {};
-      if (mapping.firstName) cleanRow['Name'] = row[mapping.firstName];
+      if (mapping.firstName) cleanRow['contact_name'] = row[mapping.firstName];
       if (mapping.email) cleanRow['Email'] = row[mapping.email];
-      if (mapping.phone) cleanRow['Phone'] = row[mapping.phone];
+      if (mapping.phone) cleanRow['contact_number'] = row[mapping.phone];
       if (mapping.company) cleanRow['Company'] = row[mapping.company];
       if (mapping.car) cleanRow['Car'] = row[mapping.car];
       return cleanRow;
